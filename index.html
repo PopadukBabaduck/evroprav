@@ -334,36 +334,39 @@ fbq('track', 'PageView');
   </svg>
 </a>
 <script>
-  document.addEventListener('DOMContentLoaded', () => {
-    // Обработчик для всех ссылок-кнопок Telegram
-    document.querySelectorAll('.telegram-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        // Google Analytics 4
-        if (window.gtag) {
-          gtag('event', 'generate_lead', {
-            event_category: 'Telegram',
-            event_label: 'Site Button'
-          });
-        }
-        // Facebook Pixel
-        if (window.fbq) {
-          fbq('track', 'Lead');
-        }
-      });
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.telegram-btn').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();               // останавливаем мгновенный редирект
+      const url   = btn.href;
+      const label = btn.dataset.label || 'Site Button';
+
+      // GA4 c Beacon-транспортом
+      if (window.gtag) {
+        gtag('event', 'generate_lead', {
+          event_category: 'Telegram',
+          event_label: label,
+          transport_type: 'beacon'
+        });
+      }
+
+      // Facebook Pixel с callback’ом
+      if (window.fbq) {
+        fbq('track', 'Lead', {}, {
+          eventCallback: () => {
+            window.location = url;
+          }
+        });
+        // на случай, если callback не сработает за 300 ms
+        setTimeout(() => window.location = url, 300);
+      } else {
+        // если пикселя нет — сразу идём по ссылке
+        window.location = url;
+      }
     });
-
-    // Если кнопка в модальном окне без класса telegram-btn,
-    // можно добавить отдельный слушатель:
-    const goBtn = document.getElementById('goTelegram');
-    if (goBtn) {
-      goBtn.addEventListener('click', () => {
-        if (window.gtag) gtag('event', 'generate_lead', { event_category: 'Telegram', event_label: 'Modal Button' });
-        if (window.fbq) fbq('track', 'Lead');
-      });
-    }
   });
+});
 </script>
-
 
 </body>
 </html>
